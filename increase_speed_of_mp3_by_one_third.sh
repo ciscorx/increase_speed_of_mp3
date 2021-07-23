@@ -122,9 +122,7 @@ fi
 
 sleep 6
 
-DISPLAY=$DISP scrot -a 550,503,115,44 /tmp/try3.ppm
 
-# DISPLAY=$DISP scrot -a 500,800,500,500 /tmp/try4.png
 
 # pause until finished importing file
 # check for time remaining message

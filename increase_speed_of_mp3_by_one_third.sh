@@ -12,7 +12,7 @@
 #  screenshots), gcc (to optionally compile the c programs for marking
 #  up screen shots)
 
-#  Tested using Audacity v2.3.3 
+#  Tested using Audacity v2.3.3 on ubuntu 20.04 
 #  Authors/maintainers: ciscorx@gmail.com
 #  License: GNU GPL v3
 

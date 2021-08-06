@@ -13,6 +13,7 @@
 #  up screen shots)
 
 #  Tested using Audacity v2.3.3 on ubuntu 20.04 
+#           and Audacity v2.2.2 on Raspberry Pi Buster
 #  Authors/maintainers: ciscorx@gmail.com
 #  License: GNU GPL v3
 

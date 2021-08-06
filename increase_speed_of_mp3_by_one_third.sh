@@ -27,28 +27,67 @@ else
     fi
 fi
 SPEEDFACTOR="1.33"
-DISP=:99
+#DISP=:99
 AUDACITY_CACHE_DIR=/tmp/aud
 SHORTPAUSE=30000
 LONGPAUSE=300000
 XLONGPAUSE=3000000
 output_screenshots=1
-step_temp_dir=/tmp/$0
-
+step_temp_dir=/tmp/${0#./}
+XVFB_TMPDIR=/tmp/XVFB${0#./}
+rm -rf $XVFB_TMPDIR
 rm -rf $step_temp_dir
 rm -rf $AUDACITY_CACHE_DIR
+mkdir -p $XVFB_TMPDIR
 mkdir -p $AUDACITY_CACHE_DIR
 mkdir -p $step_temp_dir
 step=0
 
 rnd() {
-python -S -c "import random; print random.randrange($1,$2)"
+python -S -c "import random; print (random.randrange($1,$2))"
 }
 
 rnd_offset() {
-python -S -c "import random; print random.randrange($1,$(($1 + $2)))"
+python -S -c "import random; print (random.randrange($1,$(($1 + $2))))"
 }
 
+is_display_free() {
+    xdpyinfo -display $1 >/dev/null 2>&1 && echo "in use" || echo "free"
+}
+
+find_free_display() {
+    DSP_NUM=99
+    while [ $(is_display_free ":$DSP_NUM") = "in use" ]; do
+	DSP_NUM=$(( $DSP_NUM - 1 ))
+    done
+    echo ":$DSP_NUM"
+}
+DISP=$(find_free_display)
+
+
+sleep_until_screen_stops_changing ()
+{
+
+    rm -f /tmp/screen_stops_changing.ppm
+    DISPLAY=$DISP scrot /tmp/screen_stops_changing.ppm
+    lastmd5=`md5sum /tmp/screen_stops_changing.ppm | awk '{print $1}'`
+#    echo screen changing $md5
+    tmpmd5="tmpmd5"
+    sleep 2
+    
+    until [ $tmpmd5 = $lastmd5 ]; do 
+	rm -f /tmp/screen_stops_changing.ppm
+	DISPLAY=$DISP scrot /tmp/screen_stops_changing.ppm
+	lastmd5=$tmpmd5
+	tmpmd5=`md5sum /tmp/screen_stops_changing.ppm | awk '{print $1}'`
+#	echo screen changing $tmpmd5
+	echo -n .
+	sleep 2
+    done
+    echo .
+    rm -f /tmp/screen_stops_changing.ppm
+   }
+    
 get_md5 () {
     rm -rf /tmp/targ.ppm
     DISPLAY=$DISP scrot -a $1,$2,$3,$4 /tmp/targ.ppm
@@ -68,10 +107,16 @@ get_md5 () {
 }
 
 
-pkill Xvfb
+PROCEXISTS=`ps -ef | grep $XVFB_TMPDIR | wc | awk '{print $1}'`
+if  [ ! $PROCEXISTS = 1 ]; then
+    PROCNUM=`ps -ef | grep $XVFB_TMPDIR | awk 'NR==1{print $2}'`
+    kill -9 $PROCNUM
+fi
+#pkill Xvfb
 sleep 1
-Xvfb $DISP -fbdir /tmp &
+Xvfb $DISP -fbdir $XVFB_TMPDIR &
 DISPLAY=$DISP audacity $FILENAME&
+#  "audacity failed to write to a file not enough memory" ok button 585 407 23 13 e510dac673e5abd16d527ef027a7750b
 
 sleep 5 
     
@@ -82,7 +127,7 @@ if [ $output_screenshots = 1 ]; then
 echo $step - $md5; step=$(($step + 1))  #### step:0
 fi
 
-if [ $md5 = "43648852c227719a8caaaeb03a105a90" ] || [ $md5 = "2db79e9317b342331408edeade3ecc93" ]; then
+if [ $md5 = "43648852c227719a8caaaeb03a105a90" ] || [ $md5 = "2db79e9317b342331408edeade3ecc93" ]|| [ $md5 = "5c001ab2952edd4e3c188d10b499c5e9" ]; then
 
     # check for Discard recoverable project button
     md5=$(get_md5 575 618 110 15)
@@ -90,7 +135,7 @@ if [ $md5 = "43648852c227719a8caaaeb03a105a90" ] || [ $md5 = "2db79e9317b3423314
 	echo $step - $md5; step=$(($step + 1))  #### step:0
     fi
     
-    if [ $md5 = "022bae8783e0994fdfcf81be804a6776" ]; then
+    if [ $md5 = "022bae8783e0994fdfcf81be804a6776" ] || [ $md5 = "756d9ad9f21485f16d977e85f28a14f0" ]; then
 
 	DISPLAY=$DISP xte  'mousemove 620 623' 'usleep 300000' 'mouseclick 1' "usleep $XLONGPAUSE"
 	echo clicked discard recoverable projects button
@@ -101,7 +146,7 @@ if [ $md5 = "43648852c227719a8caaaeb03a105a90" ] || [ $md5 = "2db79e9317b3423314
 	    echo $step - $md5; step=$(($step + 1))  #### step:0
 	fi
     
-	if [ $md5 = "c0adfce9291683b2d1d599cf77feea9a" ]; then
+	if [ $md5 = "c0adfce9291683b2d1d599cf77feea9a" ]|| [ $md5 = "de0322220db908637ed11fe7053eb285" ] ; then
 
 
 	    # check for yes im sure button
@@ -114,31 +159,46 @@ if [ $md5 = "43648852c227719a8caaaeb03a105a90" ] || [ $md5 = "2db79e9317b3423314
 		DISPLAY=$DISP xte  'mousemove 770 544' 'usleep 300000' 'mouseclick 1' 'usleep 4000000'
 		echo clicked the Yes im sure i want to discard all recoverable projects button
 	    fi
+	    
+ # check for yes im sure button - r4pi buster
+	    md5=$(get_md5 844 540 25 15)
+	    if [ $output_screenshots = 1 ]; then
+		echo $step - $md5; step=$(($step + 1))  #### step:0
+	    fi
+    
+	    if [ $md5 = "c884b370b34b858808769aef7772494d" ]; then
+		DISPLAY=$DISP xte  'mousemove 860 547' 'usleep 300000' 'mouseclick 1' 'usleep 4000000'
+		echo clicked the Yes im sure i want to discard all recoverable projects button - r4pi buster
+	    fi
+
 	fi
     fi
 fi
 
 
 
+
+
 sleep 6
 
 
+sleep_until_screen_stops_changing
 
 # pause until finished importing file
 # check for time remaining message
-md5=$(get_md5 550 503 115 44)
-if [ $output_screenshots = 1 ]; then
-    echo $step - $md5; step=$(($step + 1))  #### step:0
-fi
+# md5=$(get_md5 550 503 115 44)
+# if [ $output_screenshots = 1 ]; then
+#     echo $step - $md5; step=$(($step + 1))  #### step:0
+# fi
 
-while [ $md5 = 'c4cfb3deee5ad93630fd27693576e659' ]; do
-    sleep 10
-# check again for time remaining message
-    md5=$(get_md5 550 503 115 44)
-    if [ $output_screenshots = 1 ]; then
-	echo $step - $md5; step=$(($step + 1))  #### step:0
-    fi
-done
+# while [ $md5 = 'c4cfb3deee5ad93630fd27693576e659' ]; do
+#     sleep 10
+# # check again for time remaining message
+#     md5=$(get_md5 550 503 115 44)
+#     if [ $output_screenshots = 1 ]; then
+# 	echo $step - $md5; step=$(($step + 1))  #### step:0
+#     fi
+# done
 
 
 # check Dont show this again at startup message
@@ -152,8 +212,19 @@ if [ $md5 = "2fca3977526cf90da90275c82e702518" ]; then
     echo clicked Dont start this again at startup
 fi
 
+# check Dont show this again at startup message - r4pi buster
+md5=$(get_md5 226 463 250 13)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
 
-# check Dont show this again at startup message
+if [ $md5 = "0d07258c8c730fbb4a1b17ebc4948a97" ]; then
+    DISPLAY=$DISP xte  'mousemove 223 470' 'mouseclick 1' 'usleep 3000000'
+    echo clicked Dont start this again at startup
+fi
+
+
+# check Dont show this again at startup message ok button
 md5=$(get_md5 835 463 21 15)
 if [ $output_screenshots = 1 ]; then
     echo $step - $md5; step=$(($step + 1))  #### step:0
@@ -164,6 +235,16 @@ if [ $md5 = "62359f896f1d75d83461e94e714019ee" ]; then
     echo clicked ok to tips window
 fi
 
+# check Dont show this again at startup message ok button - r4pi buster
+md5=$(get_md5 678 463 20 14)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = "c87b16de96d668ae10c8bf8665115c71" ]; then
+    DISPLAY=$DISP xte  'mousemove 686 470' 'mouseclick 1' 'usleep 2000000'
+    echo clicked ok to tips window
+fi
 sleep 5
 
 DISPLAY=$DISP xte 'keydown Control_L' "usleep $SHORTPAUSE" 'str a' "usleep $LONGPAUSE" 'keyup Control_L' "usleep $XLONGPAUSE"
@@ -188,7 +269,57 @@ if [ $md5 = "50fc28cea46a0e0c80933d35e0974bab" ]; then
     if [ $md5 = "10876ac5b4e9374958f3a273b203fc1f" ]; then
 	DISPLAY=$DISP xte  'mousemove 640 355' 'mouseclick 1' 'usleep 2000000'
 	echo clicked Change speed
+###???
+	if [ $md5 = "50fc28cea46a0e0c80933d35e0974bab" ]; then
+	    DISPLAY=$DISP xte  'mousemove 590 176' 'mouseclick 1' 'usleep 2000000'
+	    echo clicked Effects menu
+	    # check for error in not selecting audo 
+	    md5=$(get_md5 338 478 605 15 )
+	    if [ $output_screenshots = 1 ]; then
+		echo $step - $md5; step=$(($step + 1))  #### step:0
+	    fi
+	    
+	    if [ $md5 = "e46ac2c9a244f67ab033b3855c59d480" ]; then
+		# check for ok button 
+		md5=$(get_md5 890 530 20 15 )
+		if [ $output_screenshots = 1 ]; then
+		    echo $step - $md5; step=$(($step + 1))  #### step:0
+		fi
+		if [ $md5 = "d22cc4330b90071b564c23235e111027" ]; then
+		    DISPLAY=$DISP xte  'mousemove 900 537' 'mouseclick 1' "usleep $XLONGPAUSE"
+		    echo clicked ok to must choose audio first
+		fi
+	    fi
+	fi
+    elif [ $md5 = "953b449749f6b1ed5d69fee7d6132d23" ]; then 
+	echo The Change Speed menu option is disabled, quitting
+    fi
+    
+fi
 
+
+# check Effects menu - r4pi buster 
+md5=$(get_md5 418 37 43 18)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = "f97c4e21f7b573ea849b9a2eedef19a8" ]; then
+    DISPLAY=$DISP xte  'mousemove 438 46' 'mouseclick 1' 'usleep 2000000'
+    echo clicked Effects menu
+
+    # check for Change speed menu option 
+    md5=$(get_md5 435 203 110 14 )
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+    
+    if [ $md5 = "b6f2ea42e1ae497d103b0618d52b65f1" ]; then
+	DISPLAY=$DISP xte  'mousemove 455 210' 'mouseclick 1' 'usleep 2000000'
+	echo clicked Change speed
+    
+	# ???? check error?
+	#md5=$(get_md5  )
 	if [ $md5 = "50fc28cea46a0e0c80933d35e0974bab" ]; then
 	    DISPLAY=$DISP xte  'mousemove 590 176' 'mouseclick 1' 'usleep 2000000'
 	    echo clicked Effects menu
@@ -230,25 +361,38 @@ if [ $md5 = "47a9844cc33e1614f58ef8d292968a89" ]; then
     DISPLAY=$DISP xte 'mousemove 600 420' 'mouseclick 1' 'mouseclick 1' "usleep $XLONGPAUSE" 'keydown Control_L' 'str a' 'keyup Control_L' "usleep $LONGPAUSE" 'key BackSpace' "usleep $XLONGPAUSE" "str $SPEEDFACTOR" "usleep $LONGPAUSE" 'key Return'
 fi
 
-sleep 1
-
-
-# pause until finished applying speed
-# check for if applying speed
-md5=$(get_md5 553 437 175 14)
+# check for Change speed dialog header - r4pi buster 
+md5=$(get_md5 230 249 335 14)
 if [ $output_screenshots = 1 ]; then
     echo $step - $md5; step=$(($step + 1))  #### step:0
 fi
 
-while [ $md5 = 'bf31d7f2cdf946f6039fc98f33481385' ]; do
-    sleep 10
-# check again if still applying speed
-    md5=$(get_md5 553 437 175 14)
-    if [ $output_screenshots = 1 ]; then
-	echo $step - $md5; step=$(($step + 1))  #### step:0
-    fi
-done
+if [ $md5 = "062e510906aab3fd66591a4f4c7f3ef9" ]; then
+    # click on speed factor field @ 600 420
+    
+    # rm -f $FILENAME
+    sleep 5
+    DISPLAY=$DISP xte 'mousemove 430 300' 'mouseclick 1' 'mouseclick 1' "usleep $XLONGPAUSE" 'keydown Control_L' 'str a' 'keyup Control_L' "usleep $LONGPAUSE" 'key BackSpace' "usleep $XLONGPAUSE" "str $SPEEDFACTOR" "usleep $LONGPAUSE" 'key Return'
+fi
 
+sleep 3
+
+sleep_until_screen_stops_changing
+# pause until finished applying speed
+# check for if applying speed
+# md5=$(get_md5 553 437 175 14)
+# if [ $output_screenshots = 1 ]; then
+#     echo $step - $md5; step=$(($step + 1))  #### step:0
+# fi
+
+# while [ $md5 = 'bf31d7f2cdf946f6039fc98f33481385' ]; do
+#     sleep 10
+# # check again if still applying speed
+#     md5=$(get_md5 553 437 175 14)
+#     if [ $output_screenshots = 1 ]; then
+# 	echo $step - $md5; step=$(($step + 1))  #### step:0
+#     fi
+# done
 
 # check for file menu
 md5=$(get_md5 177 170 25 13)
@@ -297,7 +441,58 @@ if [ $md5 = '9a2f013a62d2b7585f7448e100f47a17' ]; then
     
 fi
 
+
+# check for file menu - r4pi buster
+md5=$(get_md5  10 36 28 13)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = '8d4bbceaf29ad468da3cd2402e3c6637' ]; then
+    sleep 1
+    DISPLAY=$DISP xte 'mousemove 24 43' 'mouseclick 1' "usleep $LONGPAUSE"
+    echo  clicked File menu option
+
+    
+    # check for export menu option
+    md5=$(get_md5 26 196 55 13)
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+
+    if [ $md5 = '2bef99e7db86c416eaef29127f86c1ab' ]; then
+	sleep 1
+	DISPLAY=$DISP xte 'mousemove 60 203' 'mouseclick 1' "usleep $XLONGPAUSE" 'key Right' "usleep $LONGPAUSE" 'key Return'  "usleep $XLONGPAUSE" 'keydown Control_L' 'str x' "usleep $XLONGPAUSE" 'str v' 'keyup Control_L' 'str _fast'  "usleep $LONGPAUSE" 'key Return'
+	DISPLAY=$DISP xte "usleep $XLONGPAUSE" 'key Return' 
+	echo clicked export menu option
+	sleep 3
+    fi
+    sleep 1
+
+
+    sleep_until_screen_stops_changing
+    # pause until finished exporting file
+    # check for time remaining message
+    # md5=$(get_md5 503 430 150 23)
+    # if [ $output_screenshots = 1 ]; then
+    # 	echo $step - $md5; step=$(($step + 1))  #### step:0
+    # fi
+
+    # while [ $md5 = '1e22e42ef5de7f73a2bee5052fe15e10' ]; do
+    # 	sleep 10
+    # 	# check again for time remaining message
+    # 	md5=$(get_md5 503 430 150 23)
+    # 	if [ $output_screenshots = 1 ]; then
+    # 	    echo $step - $md5; step=$(($step + 1))  #### step:0
+    # 	fi
+    # done
+
+    
+    
+fi
+
 DISPLAY=$DISP xte 'keydown Control_L' 'str q' 'keyup Control_L' "usleep $LONGPAUSE"
+
 # check Save project before closing? 
 md5=$(get_md5 595 462 190 14)
 if [ $output_screenshots = 1 ]; then
@@ -323,7 +518,43 @@ if [ $md5 = "a8ceef9ac34f9c8e343baaec42c64666" ]; then
 fi
 
 sleep 5
-pkill Xvfb
+
+# check Save project before closing? - r4pi buster
+md5=$(get_md5 388 327 205 13)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5
+    step=$(( $step + 1 ))  #### step:0
+fi
+
+if [ $md5 = "dd89871c07b57fbd0f418643e71465b4" ]; then
+    
+    # check for No, im not saving project button 
+    md5=$(get_md5 375 404 22 18 )
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(( $step + 1 ))  #### step:0
+    fi
+    
+    if [ $md5 = "3ac2b655ac63fc44e7db2d02209ded8f" ]; then
+	
+	DISPLAY=$DISP xte  'mousemove 385 413' 'mouseclick 1' 'usleep 2000000'
+	echo clicked No, Im not saving project on closing
+	
+    fi
+    
+    
+fi
+
+#sleep 5
+#pkill Xvfb
 
 
 # DISPLAY=:99 xte 'keydown Control_L' 'str q' 'keyup Control_L' "usleep 2000000"  'mousemove 522 551' 'mouseclick 1'
+
+PROCEXISTS=`ps -ef | grep $XVFB_TMPDIR | wc | awk '{print $1}'`
+if  [ ! $PROCEXISTS = 1 ]; then
+    PROCNUM=`ps -ef | grep $XVFB_TMPDIR | awk 'NR==1{print $2}'`
+    kill -9 $PROCNUM
+fi
+
+rm -rf $AUDACITY_CACHE_DIR
+rm -rf $XVFB_TMPDIR

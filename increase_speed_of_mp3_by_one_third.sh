@@ -14,6 +14,7 @@
 
 #  Tested using Audacity v2.3.3 on ubuntu 20.04 
 #           and Audacity v2.2.2 on Raspberry Pi Buster
+#           and Audacity v2.4.2 on Raspberry Pi Buster
 #  Authors/maintainers: ciscorx@gmail.com
 #  License: GNU GPL v3
 
@@ -34,8 +35,8 @@ SHORTPAUSE=30000
 LONGPAUSE=300000
 XLONGPAUSE=3000000
 output_screenshots=1
-step_temp_dir=/tmp/${0#./}
-XVFB_TMPDIR=/tmp/XVFB${0#./}
+step_temp_dir=/tmp/${0##./}
+XVFB_TMPDIR=/tmp/XVFB${0##./}
 rm -rf $XVFB_TMPDIR
 rm -rf $step_temp_dir
 rm -rf $AUDACITY_CACHE_DIR
@@ -113,14 +114,46 @@ if  [ ! $PROCEXISTS = 1 ]; then
     PROCNUM=`ps -ef | grep $XVFB_TMPDIR | awk 'NR==1{print $2}'`
     kill -9 $PROCNUM
 fi
-#pkill Xvfb
+# pkill Xvfb
 sleep 1
 Xvfb $DISP -fbdir $XVFB_TMPDIR &
 DISPLAY=$DISP audacity $FILENAME&
 #  "audacity failed to write to a file not enough memory" ok button 585 407 23 13 e510dac673e5abd16d527ef027a7750b
 
-sleep 5 
+
+sleep 8 
     
+
+# check some projects can be recovered check for discard button
+md5=$(get_md5 570 615 115 20)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = "eccdbd5d201ce2afa9f84761e117aa6a" ]; then
+
+    
+    
+    DISPLAY=$DISP xte  'mousemove 620 623' 'usleep 300000' 'mouseclick 1' "usleep $XLONGPAUSE"
+    echo clicked discard recoverable projects button
+    
+    # check Are you sure you want to discard all recoverable projects message for YES button
+    md5=$(get_md5 740 545 30 15)
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+    
+    if [ $md5 = "357bdd9e4838798d971af605c54d2ede" ] || [ $md5 = "d" ] ; then
+	
+	
+	DISPLAY=$DISP xte  'mousemove 755 550' 'usleep 300000' 'mouseclick 1' 'usleep 4000000'
+	echo clicked the Yes im sure i want to discard all recoverable projects button
+    fi
+	
+fi
+
+
+
 
 # check some projects can be recovered
 md5=$(get_md5 405 380 467 35)
@@ -201,6 +234,30 @@ sleep_until_screen_stops_changing
 #     fi
 # done
 
+# check dont show this again at startup message alt
+md5=$(get_md5 240 466 150 11)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = "8068676af78c62121ec4a45fea79fa50" ]; then
+    DISPLAY=$DISP xte  'mousemove 235 473' 'mouseclick 1' 'usleep 3000000'
+    
+    echo clicked Dont start this again at startup alt
+    # check dont show this again at startup BUTTON
+    md5=$(get_md5 666 466 20 10)
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+    
+    if [ $md5 = "5b9d0f93edf4cd8b02032dfb3661cd97" ]; then
+	DISPLAY=$DISP xte  'mousemove 670 470' 'mouseclick 1' 'usleep 3000000'
+	echo clicked Dont start this again button at startup alt
+    fi
+    
+    
+fi
+
 
 # check Dont show this again at startup message
 md5=$(get_md5 395 466 235 13)
@@ -248,8 +305,57 @@ if [ $md5 = "c87b16de96d668ae10c8bf8665115c71" ]; then
 fi
 sleep 5
 
+# select all with control-a
 DISPLAY=$DISP xte 'keydown Control_L' "usleep $SHORTPAUSE" 'str a' "usleep $LONGPAUSE" 'keyup Control_L' "usleep $XLONGPAUSE"
 
+
+# check Effects menu alt 
+md5=$(get_md5 400 34 45 16)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = "60650dba95b15104000e9cbc618ba994" ]; then
+    DISPLAY=$DISP xte  'mousemove 420 42' 'mouseclick 1' 'usleep 2000000'
+    echo clicked Effects menu alt
+
+    # check for Change speed menu option alt 
+    md5=$(get_md5 425 212 95 15 )
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+    
+    if [ $md5 = "b5f972e9d975f237fdcc6bdcbf4f1094" ]; then
+	DISPLAY=$DISP xte  'mousemove 465 219' 'mouseclick 1' 'usleep 2000000'
+	echo clicked Change speed alt
+### not sure what this is, perhaps the Speed menu is highlighted???
+	if [ $md5 = "50fc28cea46a0e0c80933d35e0974bab" ]; then
+	    DISPLAY=$DISP xte  'mousemove 590 176' 'mouseclick 1' 'usleep 2000000'
+	    echo clicked Effects menu
+	    # check for error in not selecting audo 
+	    md5=$(get_md5 338 478 605 15 )
+	    if [ $output_screenshots = 1 ]; then
+		echo $step - $md5; step=$(($step + 1))  #### step:0
+	    fi
+	    
+	    if [ $md5 = "e46ac2c9a244f67ab033b3855c59d480" ]; then
+		# check for ok button 
+		md5=$(get_md5 890 530 20 15 )
+		if [ $output_screenshots = 1 ]; then
+		    echo $step - $md5; step=$(($step + 1))  #### step:0
+		fi
+		if [ $md5 = "d22cc4330b90071b564c23235e111027" ]; then
+		    DISPLAY=$DISP xte  'mousemove 900 537' 'mouseclick 1' "usleep $XLONGPAUSE"
+		    echo clicked ok to must choose audio first
+		fi
+	    fi
+	fi
+	# is Speed menu disabled?
+    elif [ $md5 = "953b449749f6b1ed5d69fee7d6132d23" ]; then 
+	echo The Change Speed menu option is disabled, quitting
+    fi
+    
+fi
 
 # check Effects menu 
 md5=$(get_md5 570 168 40 18)
@@ -348,6 +454,22 @@ if [ $md5 = "f97c4e21f7b573ea849b9a2eedef19a8" ]; then
     
 fi
 
+
+
+# check for Change speed dialog header alt 
+md5=$(get_md5 320 230 95 18)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = "29bab2674db0d0aedac3244253dc0342" ]; then
+    # click on speed factor field @ 600 420
+    echo encountered speed change dialog alt and changed speed to $SPEEDFACTOR
+    # rm -f $FILENAME
+    sleep 5
+    DISPLAY=$DISP xte 'mousemove 400 285' 'mouseclick 1' 'mouseclick 1' "usleep $XLONGPAUSE" 'keydown Control_L' 'str a' 'keyup Control_L' "usleep $LONGPAUSE" 'key BackSpace' "usleep $XLONGPAUSE" "str $SPEEDFACTOR" "usleep $LONGPAUSE" 'key Return'
+fi
+
 # check for Change speed dialog header 
 md5=$(get_md5 486 370 308 14)
 if [ $output_screenshots = 1 ]; then
@@ -394,6 +516,56 @@ sleep_until_screen_stops_changing
 # 	echo $step - $md5; step=$(($step + 1))  #### step:0
 #     fi
 # done
+
+
+# check for file menu alt
+md5=$(get_md5 10 33 25 18)
+if [ $output_screenshots = 1 ]; then
+    echo $step - $md5; step=$(($step + 1))  #### step:0
+fi
+
+if [ $md5 = 'a2a3c9d8fa5e7064150cf1ea42d7bedb' ]; then
+    sleep 1
+    DISPLAY=$DISP xte 'mousemove 22 40' 'mouseclick 1' "usleep $LONGPAUSE"
+    echo  clicked File menu option alt
+
+    
+    # check for export menu option alt
+    md5=$(get_md5 33 187 44 15)
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+
+    if [ $md5 = 'de373e3a651be7d9852ce8bb7b6d2fd2' ]; then
+	sleep 1
+	DISPLAY=$DISP xte 'mousemove 55 194' 'mouseclick 1' "usleep $XLONGPAUSE" 'key Return' "usleep $XLONGPAUSE" 'key Return' "usleep $XLONGPAUSE" 'key Right' "usleep $LONGPAUSE" 'str _fast'  "usleep $LONGPAUSE" 'key Return'
+	DISPLAY=$DISP xte "usleep $XLONGPAUSE" 'key Return' 
+	echo clicked export menu option alt
+	sleep 3
+    fi
+    sleep 1
+
+    sleep_until_screen_stops_changing
+    # pause until finished exporting file
+    # check for time remaining message
+    md5=$(get_md5 503 430 150 23)
+    if [ $output_screenshots = 1 ]; then
+	echo $step - $md5; step=$(($step + 1))  #### step:0
+    fi
+
+    while [ $md5 = '1e22e42ef5de7f73a2bee5052fe15e10' ]; do
+	sleep 10
+	# check again for time remaining message
+	md5=$(get_md5 503 430 150 23)
+	if [ $output_screenshots = 1 ]; then
+	    echo $step - $md5; step=$(($step + 1))  #### step:0
+	fi
+    done
+
+    
+    
+fi
+
 
 # check for file menu
 md5=$(get_md5 177 170 25 13)
